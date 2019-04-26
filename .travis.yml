@@ -11,8 +11,7 @@ matrix:
     - php: nightly
 
 before_script:
-  - flags="--ansi --prefer-dist --no-interaction --no-suggest --no-progress"
-  - composer install $flags
+  - composer install --ansi --prefer-dist --no-interaction --no-suggest --no-progress
 
 script:
   - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover=coverage.xml ; fi
