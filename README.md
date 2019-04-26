@@ -4,6 +4,9 @@
  <a href="https://packagist.org/packages/nicc0/slim-annotation-router">
   <img alt="Latest Version on Packagist" src="https://img.shields.io/packagist/v/nicc0/slim-annotation-router.svg?style=flat-square">
  </a>
+ <a href="#">
+  <img alt="Latest PHP Version" src="https://img.shields.io/packagist/php-v/nicc0/slim-annotation-router.svg?style=flat-square">
+ </a>
  <a href="https://github.com/Nicc0/Slim-Annotation-Router/blob/master/LICENSE">
   <img alt="License" src="https://img.shields.io/github/license/Nicc0/Slim-Annotation-Router.svg?style=flat-square">
  </a>
