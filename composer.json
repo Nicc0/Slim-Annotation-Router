@@ -1,5 +1,5 @@
 {
-  "name": "slim/slim-annotation-router",
+  "name": "nicc0/slim-annotation-router",
   "description": "Slim Annotation Router for Slim 4",
   "keywords": ["library", "slim", "bridge", "annotation", "rest", "router", "psr7"],
   "homepage": "https://github.com/nicc0/slim-annotation-router",
