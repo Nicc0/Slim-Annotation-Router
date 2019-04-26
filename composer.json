@@ -1,0 +1,28 @@
+{
+  "name": "slim/slim-annotation-router",
+  "description": "Slim Annotation Router for Slim 4",
+  "keywords": ["library", "slim", "bridge", "annotation", "rest", "router", "psr7"],
+  "homepage": "https://github.com/nicc0/slim-annotation-router",
+  "type": "library",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Daniel Tecza",
+      "email": "kontakt@danieltecza.pl",
+      "homepage": "https://www.danieltecza.pl/"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "doctrine/annotations": "v1.6.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Slim\\AnnotationRouter\\": "src/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7.2"
+  }
+}
