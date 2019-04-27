@@ -30,8 +30,11 @@ class RequestArgsTest extends TestCase
         $response = $this->createMock(Response::class);
 
         $arguments = [ 'hello' => 'world' ];
-        $callable = static function ($arguments) {
-            return $arguments;
+        $callable = function ($hello) {
+            $this->assertIsString($hello);
+            $this->assertEquals('world', $hello);
+
+            return new Response();
         };
 
         $strategy = new RequestArgs();
@@ -40,6 +43,6 @@ class RequestArgsTest extends TestCase
 
         $this->assertInstanceOf(InvocationStrategyInterface::class, $strategy);
         $this->assertIsCallable($strategy);
-        $this->assertEquals($arguments, $result);
+        $this->assertNotNull($result);
     }
 }
