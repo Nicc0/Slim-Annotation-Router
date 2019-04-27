@@ -2,7 +2,7 @@
 
 <p align="center">
  <a href="https://packagist.org/packages/nicc0/slim-annotation-router">
-  <img alt="Latest Version on Packagist" src="https://img.shields.io/packagist/v/nicc0/slim-annotation-router.svg?style=flat-square">
+  <img alt="Latest Version on Packagist" src="https://img.shields.io/packagist/v/Nicc0/slim-annotation-router.svg?style=flat-square">
  </a>
  <a href="#">
   <img alt="Latest PHP Version" src="https://img.shields.io/packagist/php-v/nicc0/slim-annotation-router.svg?style=flat-square">
