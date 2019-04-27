@@ -15,8 +15,7 @@ before_script:
   - composer install $flags
 
 script:
-  - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover=coverage.xml ; fi
-  - vendor/bin/phpunit
+  - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover=coverage.xml ; else vendor/bin/phpunit ; fi
 
 after_success:
   - if [[ "$ANALYSIS" == 'true' ]]; then bash <(curl -s https://codecov.io/bash) ; fi
