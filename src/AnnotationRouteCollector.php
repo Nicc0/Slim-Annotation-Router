@@ -88,7 +88,6 @@ class AnnotationRouteCollector extends RouteCollector
         /** @var RouteInterface $route */
         foreach ($routes as $route) {
             $this->routes[$route->getIdentifier()] = $route;
-            $this->routeCounter++;
         }
 
         return $this->routeCounter > 0;
@@ -103,6 +102,10 @@ class AnnotationRouteCollector extends RouteCollector
      */
     public function createRoute(array $methods, string $pattern, $callable): RouteInterface
     {
-        return parent::createRoute($methods, $pattern, $callable);
+        $route = parent::createRoute($methods, $pattern, $callable);
+
+        $this->routeCounter++;
+
+        return $route;
     }
 }
