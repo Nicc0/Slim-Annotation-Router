@@ -46,7 +46,11 @@ class AnnotationDirectoryLoader extends AnnotationFileLoader
                     continue;
                 }
 
-                $collection += $this->loader->load($class);
+                $routes = $this->loader->load($class);
+
+                foreach ($routes as $route) {
+                    $collection[] = $route;
+                }
             }
         }
 
