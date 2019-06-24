@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @RoutePrefix("/example")
  */
-class ExampleController
+class ExampleController extends AbstractController
 {
 
     /**
