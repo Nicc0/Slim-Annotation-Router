@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\Annotation\IgnoreAnnotation;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\DocParser;
+use Psr\Container\ContainerInterface;
 use Slim\AnnotationRouter\Annotations\Middleware;
 use Slim\AnnotationRouter\Annotations\Route;
 use Slim\AnnotationRouter\Annotations\RoutePrefix;
@@ -94,15 +95,22 @@ class AnnotationRouteCollector extends RouteCollector
     }
 
     /**
-     * @param array $methods
+     * @param array  $methods
      * @param string $pattern
-     * @param $callable
+     * @param string $class
+     * @param string $method
      *
      * @return \Slim\Interfaces\RouteInterface
      */
-    public function createRoute(array $methods, string $pattern, $callable): RouteInterface
+    public function createAnnotationRoute(array $methods, string $pattern, string $class, string $method): RouteInterface
     {
-        $route = parent::createRoute($methods, $pattern, $callable);
+        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
+            $instance = $this->container->get($class);
+        } else {
+            $instance = new $class($this->container);
+        }
+
+        $route = $this->createRoute($methods, $pattern, [ $instance, $method ]);
 
         $this->routeCounter++;
 

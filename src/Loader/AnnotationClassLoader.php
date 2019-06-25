@@ -97,9 +97,8 @@ class AnnotationClassLoader
     {
         $methods = $annotation->methods;
         $pattern = $routePrefix . $annotation->value;
-        $callable = [ $class, $method ];
 
-        $route = $this->collector->createRoute($methods, $pattern, $callable);
+        $route = $this->collector->createAnnotationRoute($methods, $pattern, $class, $method);
 
         if (!empty($annotation->name) && is_string($annotation->name)) {
             $route->setName($annotation->name);
