@@ -65,6 +65,9 @@ class AnnotationRouteCollector extends RouteCollector
 
     /**
      * @return bool
+     *
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \ReflectionException
      */
     public function collectRoutes(): bool
     {
@@ -81,18 +84,14 @@ class AnnotationRouteCollector extends RouteCollector
             AnnotationRegistry::loadAnnotationClass($class);
         }
 
-        try {
-            $annotationReader = new AnnotationReader($docParser);
+        $annotationReader = new AnnotationReader($docParser);
 
-            $reflection = new \ReflectionProperty(AnnotationReader::class, 'globalImports');
-            $reflection->setAccessible(true);
-            $reflection->setValue(null, $this->annotationImports);
+        $reflection = new \ReflectionProperty(AnnotationReader::class, 'globalImports');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, $this->annotationImports);
 
-            $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader, $this));
-            $routes = $annotationDirectoryLoader->load($directoryPath);
-        } catch (\Throwable $ex) {
-            $routes = [];
-        }
+        $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader, $this));
+        $routes = $annotationDirectoryLoader->load($directoryPath);
 
         /** @var RouteInterface $route */
         foreach ($routes as $route) {
