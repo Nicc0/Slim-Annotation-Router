@@ -86,7 +86,7 @@ class AnnotationClassLoader
                     if ($annotation instanceof Route) {
                         $route = $this->getRoute($className, $method->getName(), $routePrefix, $annotation);
 
-                        if ($middlewares !== [] && $container instanceof ContainerInterface) {
+                        if ($middlewares !== null && $container instanceof ContainerInterface) {
                             foreach ($middlewares as $middlewareName) {
                                 $route->addMiddleware($container->get($middlewareName));
                             }
