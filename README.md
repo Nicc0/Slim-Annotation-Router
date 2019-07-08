@@ -22,7 +22,7 @@ Annotation Router for [Slim 4.x](https://github.com/slimphp/Slim/tree/4.x)
 
 ## Installation
 
-It's recommended that you use [Composer](https://getcomposer.org/) to install Slimw Annotation Router.
+It's recommended using [Composer](https://getcomposer.org/) to install Slim Annotation Router.
 
 ```bash
 $ composer require "nicc0/slim-annotation-router"
@@ -38,7 +38,7 @@ $resolver = new CallableResolver();
 
 $controllerPath = './app/controllers/';
 
-$collector = new AnnotationRouteCollector( $factory, $resolver );
+$collector = new AnnotationRouteCollector( $factory, $resolver, $container );
 $collector->setDefaultControllersPath( $controllersPath );
 $collector->collectRoutes();
 
@@ -71,6 +71,40 @@ class ExampleController
 ```
 
 By opening the url http://your_site_url/example/hello, you should see "Hello world!".
+
+## Adding Middlewares to contoller by Annotation
+
+To add Middleware to Controller or Action use `@Middleware("")` annotation, which pass the name of Middleware.
+It is important to know that the name we pass must be defined in the Container. Name passes as the third parameter in the `AnnotationRouteCollector` constructor. It is also important that the added Middleware must implements of `MiddlewareInterface` otherwise Middleware will not be added to the Route.
+
+There is also possibility to add more than one Middleware to Controller or Action.
+
+For example, we have to add AuthMiddleware to controller. Firstly we have to define AuthMiddleware in Container. 
+
+```php
+$container->set('authMiddleware', function() use ($container) {
+ return new AuthContainer(container);
+})
+```
+
+If Middleware exists in our Container, now we can use middleware annotation by adding `@Middleware("authMiddleware")` to controller.
+
+```php
+/**
+ * @RoutePrefix("/example")
+ * @Middleware("authMiddleware")
+ */
+class ExampleController
+{
+    /**
+     * @Route("/hello", methods={"GET"}, name="example.hello")
+     */
+    public function hello(): ResponseInterface
+    {
+        ...
+    }
+}
+```
 
 ## Tests
 
