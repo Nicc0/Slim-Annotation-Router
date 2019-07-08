@@ -18,38 +18,5 @@ use Slim\AnnotationRouter\Tests\Controller\ExampleController;
  */
 class AnnotationClassLoaderTest extends TestCase
 {
-    /** @var AnnotationClassLoader */
-    private $classLoader;
 
-    public function setUp()
-    {
-        /** @var Reader $reader */
-        $reader = $this->createMock(Reader::class);
-
-        /** @var AnnotationRouteCollector $collector */
-        $collector = $this->createMock(AnnotationRouteCollector::class);
-
-        $this->classLoader = new AnnotationClassLoader($reader, $collector);
-    }
-
-    public function testCanLoadAnnotationRoutesFromNotExistingClass(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        $this->classLoader->load(\ExampleController::class);
-    }
-
-    public function testCanLoadAnnotationRoutesFromAbstractClass(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        $this->classLoader->load(AbstractController::class);
-    }
-
-    public function testCanLoadAnnotationRoutesFromClass(): void
-    {
-        $routes = $this->classLoader->load(ExampleController::class);
-
-        var_dump($routes);
-    }
 }
