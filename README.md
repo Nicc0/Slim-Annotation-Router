@@ -83,7 +83,7 @@ For example, we have to add AuthMiddleware to controller. Firstly we have to def
 
 ```php
 $container->set('authMiddleware', function() use ($container) {
- return new AuthContainer(container);
+    return new AuthContainer(container);
 })
 ```
 
