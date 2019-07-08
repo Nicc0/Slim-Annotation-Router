@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Slim\AnnotationRouter\AnnotationRouteCollector;
 use Slim\CallableResolver;
 use Slim\Http\Factory\DecoratedResponseFactory;
+use Slim\Interfaces\RouteInterface;
 use Slim\Psr7\Factory\ResponseFactory;
 use Slim\Psr7\Factory\StreamFactory;
 
@@ -24,7 +25,7 @@ class SlimIntegrationTest extends TestCase
     /** @var CallableResolver */
     private $resolver;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->factory = new DecoratedResponseFactory( new ResponseFactory(), new StreamFactory() );
         $this->resolver = new CallableResolver( );
@@ -35,5 +36,18 @@ class SlimIntegrationTest extends TestCase
         $collector = new AnnotationRouteCollector( $this->factory, $this->resolver );
         $collector->setDefaultControllersPath( __DIR__ . DIRECTORY_SEPARATOR . 'Controller');
         $collector->collectRoutes();
+
+        $routes = $collector->getRoutes();
+
+        $this->assertArrayHasKey('route0', $routes);
+        $this->assertArrayHasKey('route1', $routes);
+
+        /** @var RouteInterface $route */
+        $route = $routes['route0'];
+
+        $this->assertInstanceOf(RouteInterface::class, $route);
+        $this->assertEquals([ 'GET' ], $route->getMethods());
+        $this->assertEquals('example.test', $route->getName());
+        $this->assertEquals('/example/test', $route->getPattern());
     }
 }

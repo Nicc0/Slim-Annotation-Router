@@ -80,8 +80,13 @@ class AnnotationRouteCollector extends RouteCollector
         $docParser = new DocParser();
         $docParser->setIgnoreNotImportedAnnotations( true );
 
-        foreach ($this->annotationImports as $class) {
-            AnnotationRegistry::loadAnnotationClass($class);
+        $annotationsPath = __DIR__ . DIRECTORY_SEPARATOR . 'Annotations';
+
+        foreach (scandir($annotationsPath) as $annotation) {
+            if (!in_array($annotation, ['.', '..'], true)) {
+                $annotationPath = $annotationsPath . DIRECTORY_SEPARATOR . $annotation;
+                AnnotationRegistry::registerFile($annotationPath);
+            }
         }
 
         $annotationReader = new AnnotationReader($docParser);
