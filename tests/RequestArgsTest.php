@@ -3,7 +3,7 @@
 namespace Slim\AnnotationRouter\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Slim\AnnotationRouter\Strategies\RequestArgs;
+use Slim\AnnotationRouter\Strategies\InvocationWithArgs;
 use Slim\Http\ServerRequest;
 use Slim\Interfaces\InvocationStrategyInterface;
 use Slim\Psr7\Response;
@@ -18,7 +18,7 @@ class RequestArgsTest extends TestCase
 {
     public function testCanRequestArgsIsInstanceOfInvocationStrategyInterface(): void
     {
-        $this->assertInstanceOf(InvocationStrategyInterface::class, new RequestArgs());
+        $this->assertInstanceOf(InvocationStrategyInterface::class, new InvocationWithArgs());
     }
 
     public function testCanRequestArgsCanBeInvoked(): void
@@ -37,7 +37,7 @@ class RequestArgsTest extends TestCase
             return new Response();
         };
 
-        $strategy = new RequestArgs();
+        $strategy = new InvocationWithArgs();
 
         $result = $strategy($callable, $request, $response, $arguments);
 

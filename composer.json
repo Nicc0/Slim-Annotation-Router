@@ -15,9 +15,9 @@
   ],
   "require": {
     "php": "^7.1",
-    "slim/slim": "4.0.0-beta",
-    "slim/psr7": "0.3.0",
-    "slim/http": "0.7",
+    "slim/slim": "^4.0.0-beta",
+    "slim/psr7": "^0.3.0",
+    "slim/http": "^0.7",
     "doctrine/annotations": "v1.6.0"
   },
   "require-dev": {

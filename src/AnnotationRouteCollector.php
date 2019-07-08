@@ -56,6 +56,14 @@ class AnnotationRouteCollector extends RouteCollector
     }
 
     /**
+     * @return ContainerInterface|null
+     */
+    public function getContainer(): ?ContainerInterface
+    {
+        return $this->container ?? null;
+    }
+
+    /**
      * @return bool
      */
     public function collectRoutes(): bool

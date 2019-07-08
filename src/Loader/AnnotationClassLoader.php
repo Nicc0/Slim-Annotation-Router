@@ -3,7 +3,9 @@
 namespace Slim\AnnotationRouter\Loader;
 
 use Doctrine\Common\Annotations\Reader;
+use Psr\Container\ContainerInterface;
 use Slim\AnnotationRouter\AnnotationRouteCollector;
+use Slim\AnnotationRouter\Annotations\Middleware;
 use Slim\AnnotationRouter\Annotations\Route;
 use Slim\AnnotationRouter\Annotations\RoutePrefix;
 use Slim\Interfaces\RouteInterface;
@@ -54,6 +56,7 @@ class AnnotationClassLoader
         }
 
         $invokeAnnotation = null;
+        $middlewares = null;
         $routePrefix = '';
         $collection = [];
 
@@ -65,14 +68,46 @@ class AnnotationClassLoader
             if ($annotation instanceof RoutePrefix) {
                 $routePrefix = $annotation->value;
             }
+
+            if ($annotation instanceof Middleware) {
+                $middlewares[] = $annotation->value;
+            }
         }
+
+        $container = $this->collector->getContainer();
+
 
         foreach ($class->getMethods() as $method) {
             if ($method->isPublic()) {
+                $methodRoutes = [];
+                $methodMiddleware = [];
+
                 foreach ($this->reader->getMethodAnnotations($method) as $annotation) {
                     if ($annotation instanceof Route) {
-                        $collection[] = $this->getRoute($className, $method->getName(), $routePrefix, $annotation);
+                        $route = $this->getRoute($className, $method->getName(), $routePrefix, $annotation);
+
+                        if ($middlewares !== [] && $container instanceof ContainerInterface) {
+                            foreach ($middlewares as $middlewareName) {
+                                $route->addMiddleware($container->get($middlewareName));
+                            }
+                        }
+
+                        $methodRoutes[] = $route;
                     }
+
+                    if ($annotation instanceof Middleware && $container instanceof ContainerInterface) {
+                        $methodMiddleware[] = $annotation->value;
+                    }
+                }
+
+                foreach ($methodRoutes as $route) {
+                    if ($methodMiddleware !== []) {
+                        foreach ($methodMiddleware as $middlewareName) {
+                            $route->addMiddleware($container->get($middlewareName));
+                        }
+                    }
+
+                    $collection[] = $route;
                 }
             }
         }
