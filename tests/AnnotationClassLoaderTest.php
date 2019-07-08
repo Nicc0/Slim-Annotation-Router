@@ -49,5 +49,7 @@ class AnnotationClassLoaderTest extends TestCase
     public function testCanLoadAnnotationRoutesFromClass(): void
     {
         $routes = $this->classLoader->load(ExampleController::class);
+
+        var_dump($routes);
     }
 }
