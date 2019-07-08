@@ -39,11 +39,12 @@ class RouteTest extends TestCase
 
         $comment = $reflection->getDocComment();
 
-        $result = preg_match('/*(?: *)@Target\({(?<=\{)(.*?)(?=\})}\)(?: *)\n/', $comment, $matches);
+        $result = preg_match('/\*(?: *)@Target\({(.*)}\)(?: *)/', $comment, $matches);
 
-        $this->assertNotFalse($result);
+        $this->assertEquals(1, $result);
+        $this->assertCount(2, $matches);
 
-        $targets = \explode(',', $matches);
+        $targets = \explode(',', $matches[1]);
 
         $this->assertEquals(['CLASS', 'METHOD'], array_map(static function ($value) {
             return trim($value, ' "');
