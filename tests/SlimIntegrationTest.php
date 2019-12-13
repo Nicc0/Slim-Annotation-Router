@@ -9,6 +9,7 @@ use Slim\Http\Factory\DecoratedResponseFactory;
 use Slim\Interfaces\RouteInterface;
 use Slim\Psr7\Factory\ResponseFactory;
 use Slim\Psr7\Factory\StreamFactory;
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Class SlimIntegrationTest
@@ -35,12 +36,16 @@ class SlimIntegrationTest extends TestCase
     {
         $collector = new AnnotationRouteCollector( $this->factory, $this->resolver );
         $collector->setDefaultControllersPath( __DIR__ . DIRECTORY_SEPARATOR . 'Controller');
+        $collector->setDefaultTemporaryFilePath(__DIR__ . DIRECTORY_SEPARATOR . 'Cache');
         $collector->collectRoutes();
 
         $routes = $collector->getRoutes();
 
+        $this->assertCount(3, $routes);
+
         $this->assertArrayHasKey('route0', $routes);
         $this->assertArrayHasKey('route1', $routes);
+        $this->assertArrayHasKey('route2', $routes);
 
         /** @var RouteInterface $route */
         $route = $routes['route0'];

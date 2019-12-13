@@ -15,13 +15,13 @@
   ],
   "require": {
     "php": "^7.1",
-    "slim/slim": "^4.0.0-beta",
-    "slim/psr7": "^0.3.0",
-    "slim/http": "^0.7",
-    "doctrine/annotations": "v1.6.0"
+    "slim/slim": "~4.0",
+    "slim/psr7": "~0.3",
+    "slim/http": "~0.7",
+    "doctrine/annotations": "~1.6"
   },
   "require-dev": {
-    "phpunit/phpunit": "^7.5"
+    "phpunit/phpunit": ">=7.5"
   },
   "autoload": {
     "psr-4": {

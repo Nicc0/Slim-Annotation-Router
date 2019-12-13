@@ -1,14 +1,21 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Slim\AnnotationRouter\Loader;
 
 use Doctrine\Common\Annotations\Reader;
-use Psr\Container\ContainerInterface;
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionException;
 use Slim\AnnotationRouter\AnnotationRouteCollector;
 use Slim\AnnotationRouter\Annotations\Middleware;
 use Slim\AnnotationRouter\Annotations\Route;
 use Slim\AnnotationRouter\Annotations\RoutePrefix;
-use Slim\Interfaces\RouteInterface;
+
+use function array_push;
+use function class_exists;
+use function count;
 
 /**
  * Class AnnotationClassLoader
@@ -19,103 +26,79 @@ use Slim\Interfaces\RouteInterface;
  */
 class AnnotationClassLoader
 {
-    /** @var \Slim\AnnotationRouter\AnnotationRouteCollector */
-    protected $collector;
-
-    /** @var \Doctrine\Common\Annotations\Reader */
+    /** @var Reader */
     protected $reader;
 
     /**
      * AnnotationClassLoader constructor.
      *
-     * @param \Doctrine\Common\Annotations\Reader $reader
-     * @param \Slim\AnnotationRouter\AnnotationRouteCollector $collector
+     * @param AnnotationRouteCollector $collector
      */
-    public function __construct(Reader $reader, AnnotationRouteCollector $collector)
+    public function __construct(Reader $reader)
     {
         $this->reader = $reader;
-        $this->collector = $collector;
     }
 
     /**
      * @param string $className
      *
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function load(string $className): array
     {
         if (!class_exists($className)) {
-            throw new \InvalidArgumentException(sprintf('Class "%s" does not exist.', $className));
+            throw new InvalidArgumentException(sprintf('Class "%s" does not exist.', $className));
         }
 
-        $class = new \ReflectionClass($className);
+        $class = new ReflectionClass($className);
 
         if ($class->isAbstract()) {
-            throw new \InvalidArgumentException(sprintf('Annotations from class "%s" cannot be read as it is abstract.', $class->getName()));
+            throw new InvalidArgumentException(sprintf('Annotations from class "%s" cannot be read as it is abstract.', $class->getName()));
         }
 
+        $classMiddleware = $collection = [];
         $invokeAnnotation = null;
-        $middlewares = null;
         $routePrefix = '';
-        $collection = [];
 
         foreach ($this->reader->getClassAnnotations($class) as $annotation) {
-            if ($annotation instanceof Route) {
-                $invokeAnnotation = $annotation;
-            }
-
-            if ($annotation instanceof RoutePrefix) {
-                $routePrefix = $annotation->value;
-            }
-
-            if ($annotation instanceof Middleware) {
-                $middlewares[] = $annotation->value;
+            switch (true) {
+                case $annotation instanceof Route:
+                    $invokeAnnotation = $annotation; break;
+                case $annotation instanceof RoutePrefix:
+                    $routePrefix = $annotation->value; break;
+                case $annotation instanceof Middleware;
+                    $classMiddleware[] = $annotation->value; break;
             }
         }
-
-        $container = $this->collector->getContainer();
-
 
         foreach ($class->getMethods() as $method) {
             if ($method->isPublic()) {
-                $methodRoutes = [];
-                $methodMiddleware = [];
+                $middleware = $routes = [];
 
                 foreach ($this->reader->getMethodAnnotations($method) as $annotation) {
                     if ($annotation instanceof Route) {
-                        $route = $this->getRoute($className, $method->getName(), $routePrefix, $annotation);
-
-                        if ($middlewares !== null && $container instanceof ContainerInterface) {
-                            foreach ($middlewares as $middlewareName) {
-                                $route->addMiddleware($container->get($middlewareName));
-                            }
-                        }
-
-                        $methodRoutes[] = $route;
+                        $routes[] = $this->getRoute($className, $method->getName(), $routePrefix, $classMiddleware, $annotation);
                     }
 
-                    if ($annotation instanceof Middleware && $container instanceof ContainerInterface) {
-                        $methodMiddleware[] = $annotation->value;
+                    if ($annotation instanceof Middleware) {
+                        $middleware[] = $annotation->value;
                     }
                 }
 
-                foreach ($methodRoutes as $route) {
-                    if ($methodMiddleware !== []) {
-                        foreach ($methodMiddleware as $middlewareName) {
-                            $route->addMiddleware($container->get($middlewareName));
-                        }
+                foreach ($middleware as $middlewareName) {
+                    foreach ($routes as $route) {
+                        $route['middleware'][] = $middlewareName;
                     }
-
-                    $collection[] = $route;
                 }
+
+                array_push($collection, ...$routes);
             }
         }
 
         if ($invokeAnnotation !== null && count($collection) === 0 && $class->hasMethod('__invoke')) {
             $collection[] = $this->getRoute($className, '__invoke', $routePrefix, $invokeAnnotation);
         }
-
 
         return $collection;
     }
@@ -124,21 +107,20 @@ class AnnotationClassLoader
      * @param string $class
      * @param string $method
      * @param string $routePrefix
-     * @param \Slim\AnnotationRouter\Annotations\Route $annotation
+     * @param array  $middleware
+     * @param Route  $annotation
      *
-     * @return RouteInterface
+     * @return array
      */
-    private function getRoute(string $class, string $method, string $routePrefix, Route $annotation): RouteInterface
+    private function getRoute(string $class, string $method, string $routePrefix, array $middleware, Route $annotation): array
     {
-        $methods = $annotation->methods;
-        $pattern = $routePrefix . $annotation->value;
-
-        $route = $this->collector->createAnnotationRoute($methods, $pattern, $class, $method);
-
-        if (!empty($annotation->name) && is_string($annotation->name)) {
-            $route->setName($annotation->name);
-        }
-
-        return $route;
+        return [
+            'name'       => $annotation->name,
+            'methods'    => $annotation->methods,
+            'pattern'    => $routePrefix . $annotation->value,
+            'class'      => $class,
+            'method'     => $method,
+            'middleware' => $middleware,
+        ];
     }
 }

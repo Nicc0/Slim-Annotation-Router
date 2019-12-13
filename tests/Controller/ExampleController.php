@@ -35,6 +35,7 @@ class ExampleController extends AbstractController
 
     /**
      * @Route("/test/{name}", methods={"GET"}, name="example.test")
+     * @Route("/test/{name}/hello", methods={"GET"}, name="example.test.hello")
      *
      * @param \Psr\Http\Message\RequestInterface $request
      * @param \Psr\Http\Message\ResponseInterface $response

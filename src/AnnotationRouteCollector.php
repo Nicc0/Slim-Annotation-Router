@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Slim\AnnotationRouter;
 
@@ -12,8 +14,21 @@ use Slim\AnnotationRouter\Annotations\Route;
 use Slim\AnnotationRouter\Annotations\RoutePrefix;
 use Slim\AnnotationRouter\Loader\AnnotationClassLoader;
 use Slim\AnnotationRouter\Loader\AnnotationDirectoryLoader;
-use Slim\Interfaces\RouteInterface;
 use Slim\Routing\RouteCollector;
+use SlimAbstractController;
+
+use function dirname;
+use function file_exists;
+use function file_put_contents;
+use function in_array;
+use function is_dir;
+use function is_readable;
+use function is_writable;
+use function mkdir;
+use function scandir;
+use function trigger_error;
+use function var_dump;
+use function var_export;
 
 /**
  * Class AnnotationRouteCollector
@@ -35,10 +50,13 @@ class AnnotationRouteCollector extends RouteCollector
     /** @var string|null */
     protected $defaultControllersPath;
 
+    /** @var string|null */
+    protected $defaultRoutesTemporaryFilePath;
+
     /**
      * @param string $path
      *
-     * @return \Slim\AnnotationRouter\AnnotationRouteCollector
+     * @return self
      */
     public function setDefaultControllersPath(string $path): AnnotationRouteCollector
     {
@@ -56,6 +74,23 @@ class AnnotationRouteCollector extends RouteCollector
     }
 
     /**
+     * @param string $filePath
+     *
+     * @return self
+     */
+    public function setDefaultTemporaryFilePath(string $filePath): AnnotationRouteCollector
+    {
+        $this->defaultRoutesTemporaryFilePath = $filePath;
+
+        return $this;
+    }
+
+    public function getDefaultTemporaryFilePath(): string
+    {
+        return $this->defaultRoutesTemporaryFilePath ?? sys_get_temp_dir();
+    }
+
+    /**
      * @return ContainerInterface|null
      */
     public function getContainer(): ?ContainerInterface
@@ -64,12 +99,78 @@ class AnnotationRouteCollector extends RouteCollector
     }
 
     /**
+     * @param bool $forceFromAnnotation
+     *
      * @return bool
+     */
+    public function collectRoutes(bool $forceFromAnnotation = false): bool
+    {
+        $routes = [];
+
+        if ($forceFromAnnotation === false && $this->isTemporaryFile() === true) {
+            $routes = $this->collectRoutesFromTemporaryFile();
+        }
+
+        if ($forceFromAnnotation === true || $routes === []) {
+            try {
+                $routes = $this->collectRoutesFromAnnotations();
+            } catch (\Throwable $exception) {
+                trigger_error('cannot collect routes from annotation, ' . $exception->getMessage(), E_USER_WARNING);
+            }
+        }
+
+        foreach ($routes as $annotationRoute) {
+            $this->createAnnotationRoute($annotationRoute);
+        }
+
+        return $this->routeCounter > 0;
+    }
+
+    /**
+     * @param array $annotationRoute
+     */
+    private function createAnnotationRoute(array $annotationRoute): void
+    {
+        $class = $annotationRoute['class'];
+
+        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
+            $instance = $this->container->get($class);
+        } elseif (class_exists($class)) {
+            if (is_subclass_of($class, SlimAbstractController::class)) {
+                $this->getDefaultInvocationStrategy();
+                $instance = new $class($this->container);
+            } else {
+                $instance = new $class($this->container);
+            }
+        } else {
+            $instance = $class;
+        }
+
+        $route = $this->createRoute(
+            $annotationRoute['methods'], $annotationRoute['pattern'], [ $instance, $annotationRoute['pattern'] ]
+        );
+
+        if (!empty($annotationRoute['name']) && is_string($annotationRoute['name'])) {
+            $route->setName($annotationRoute['name']);
+        }
+
+        if ($annotationRoute['middleware'] !== [] && $this->container instanceof ContainerInterface) {
+            foreach ($annotationRoute['middleware'] as $middlewareName) {
+                $route->addMiddleware($this->container->get($middlewareName));
+            }
+        }
+
+        $this->routes[$route->getIdentifier()] = $route;
+        $this->routeCounter++;
+    }
+
+    /**
+     * @return array
      *
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \ReflectionException
      */
-    public function collectRoutes(): bool
+    private function collectRoutesFromAnnotations(): array
     {
         $directoryPath = $this->getDefaultControllersPath();
 
@@ -96,36 +197,43 @@ class AnnotationRouteCollector extends RouteCollector
         $reflection->setValue(null, $this->annotationImports);
 
         $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader, $this));
+
         $routes = $annotationDirectoryLoader->load($directoryPath);
 
-        /** @var RouteInterface $route */
-        foreach ($routes as $route) {
-            $this->routes[$route->getIdentifier()] = $route;
+        if (!is_dir($dirname = dirname($this->getTemporaryFileName())) && !mkdir($dirname) && !is_dir($dirname)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $dirname));
         }
 
-        return $this->routeCounter > 0;
+        if (is_writable(dirname($tempName = $this->getTemporaryFileName()))) {
+            file_put_contents($tempName, '<?php return ' . var_export($routes));
+        }
+
+        return $routes;
     }
 
     /**
-     * @param array  $methods
-     * @param string $pattern
-     * @param string $class
-     * @param string $method
+     * @noinspection PhpIncludeInspection
      *
-     * @return \Slim\Interfaces\RouteInterface
+     * @return array
      */
-    public function createAnnotationRoute(array $methods, string $pattern, string $class, string $method): RouteInterface
+    private function collectRoutesFromTemporaryFile(): array
     {
-        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
-            $instance = $this->container->get($class);
-        } else {
-            $instance = new $class($this->container);
-        }
+        return require $this->getDefaultTemporaryFilePath();
+    }
 
-        $route = $this->createRoute($methods, $pattern, [ $instance, $method ]);
+    /**
+     * @return bool
+     */
+    private function isTemporaryFile(): bool
+    {
+        return file_exists($tempName = $this->getTemporaryFileName()) && is_writable($tempName) && is_readable($tempName);
+    }
 
-        $this->routeCounter++;
-
-        return $route;
+    /**
+     * @return string
+     */
+    private function getTemporaryFileName(): string
+    {
+        return $this->getDefaultTemporaryFilePath() . DIRECTORY_SEPARATOR . __CLASS__ . '-RoutesMap.php';
     }
 }
