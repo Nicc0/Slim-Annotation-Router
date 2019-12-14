@@ -204,7 +204,7 @@ class AnnotationRouteCollector extends RouteCollector
         }
 
         if (is_writable(dirname($tempName = $this->getTemporaryFileName()))) {
-            file_put_contents($tempName, '<?php return ' . var_export($routes, true));
+            file_put_contents($tempName, '<?php return ' . var_export($routes, true) . ';');
         }
 
         return $routes;
