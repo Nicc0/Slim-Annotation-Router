@@ -217,7 +217,7 @@ class AnnotationRouteCollector extends RouteCollector
      */
     private function collectRoutesFromTemporaryFile(): array
     {
-        return require $this->getDefaultTemporaryFilePath();
+        return require $this->getTemporaryFileName();
     }
 
     /**
