@@ -146,7 +146,7 @@ class AnnotationRouteCollector extends RouteCollector
         }
 
         $route = $this->createRoute(
-            $annotationRoute['methods'], $annotationRoute['pattern'], [ $instance, $annotationRoute['pattern'] ]
+            $annotationRoute['methods'], $annotationRoute['pattern'], [ $instance, $annotationRoute['action'] ]
         );
 
         if (!empty($annotationRoute['name']) && is_string($annotationRoute['name'])) {
@@ -195,7 +195,7 @@ class AnnotationRouteCollector extends RouteCollector
         $reflection->setAccessible(true);
         $reflection->setValue(null, $this->annotationImports);
 
-        $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader, $this));
+        $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader));
 
         $routes = $annotationDirectoryLoader->load($directoryPath);
 

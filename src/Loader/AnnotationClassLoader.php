@@ -105,21 +105,21 @@ class AnnotationClassLoader
 
     /**
      * @param string $class
-     * @param string $method
+     * @param string $action
      * @param string $routePrefix
      * @param array  $middleware
      * @param Route  $annotation
      *
      * @return array
      */
-    private function getRoute(string $class, string $method, string $routePrefix, array $middleware, Route $annotation): array
+    private function getRoute(string $class, string $action, string $routePrefix, array $middleware, Route $annotation): array
     {
         return [
             'name'       => $annotation->name,
             'methods'    => $annotation->methods,
             'pattern'    => $routePrefix . $annotation->value,
             'class'      => $class,
-            'method'     => $method,
+            'action'     => $action,
             'middleware' => $middleware,
         ];
     }
