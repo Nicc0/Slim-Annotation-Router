@@ -27,7 +27,6 @@ use function is_writable;
 use function mkdir;
 use function scandir;
 use function trigger_error;
-use function var_dump;
 use function var_export;
 
 /**
@@ -205,7 +204,7 @@ class AnnotationRouteCollector extends RouteCollector
         }
 
         if (is_writable(dirname($tempName = $this->getTemporaryFileName()))) {
-            file_put_contents($tempName, '<?php return ' . var_export($routes));
+            file_put_contents($tempName, '<?php return ' . var_export($routes, true));
         }
 
         return $routes;
@@ -234,6 +233,6 @@ class AnnotationRouteCollector extends RouteCollector
      */
     private function getTemporaryFileName(): string
     {
-        return $this->getDefaultTemporaryFilePath() . DIRECTORY_SEPARATOR . __CLASS__ . '-RoutesMap.php';
+        return $this->getDefaultTemporaryFilePath() . DIRECTORY_SEPARATOR . 'annotation-router' . DIRECTORY_SEPARATOR . 'routes.php';
     }
 }
