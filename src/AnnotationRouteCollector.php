@@ -131,7 +131,8 @@ class AnnotationRouteCollector extends RouteCollector
     private function createAnnotationRoute(array $annotationRoute): void
     {
         $action = $annotationRoute[ 'action' ];
-
+        $class = $annotationRoute[ 'class' ];
+            
         if ( $this->container instanceof ContainerInterface && $this->container->has( $class ) ) {
             $callable = [ $this->container->get( $class ), $action ];
         } else {
