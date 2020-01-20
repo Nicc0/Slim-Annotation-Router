@@ -106,20 +106,20 @@ class AnnotationRouteCollector extends RouteCollector
     {
         $routes = [];
 
-        if ($forceFromAnnotation === false && $this->isTemporaryFile() === true) {
+        if ( $forceFromAnnotation === false && $this->isTemporaryFile() === true ) {
             $routes = $this->collectRoutesFromTemporaryFile();
         }
 
-        if ($forceFromAnnotation === true || $routes === []) {
+        if ( $forceFromAnnotation === true || $routes === [] ) {
             try {
                 $routes = $this->collectRoutesFromAnnotations();
-            } catch (\Throwable $exception) {
-                trigger_error('cannot collect routes from annotation, ' . $exception->getMessage(), E_USER_WARNING);
+            } catch ( \Throwable $exception ) {
+                trigger_error( 'cannot collect routes from annotation, ' . $exception->getMessage(), E_USER_WARNING );
             }
         }
 
-        foreach ($routes as $annotationRoute) {
-            $this->createAnnotationRoute($annotationRoute);
+        foreach ( $routes as $annotationRoute ) {
+            $this->createAnnotationRoute( $annotationRoute );
         }
 
         return $this->routeCounter > 0;
@@ -130,36 +130,29 @@ class AnnotationRouteCollector extends RouteCollector
      */
     private function createAnnotationRoute(array $annotationRoute): void
     {
-        $class = $annotationRoute['class'];
+        $action = $annotationRoute[ 'action' ];
 
-        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
-            $instance = $this->container->get($class);
-        } elseif (class_exists($class)) {
-            if (is_subclass_of($class, SlimAbstractController::class)) {
-                $this->getDefaultInvocationStrategy();
-                $instance = new $class($this->container);
-            } else {
-                $instance = new $class($this->container);
-            }
+        if ( $this->container instanceof ContainerInterface && $this->container->has( $class ) ) {
+            $callable = [ $this->container->get( $class ), $action ];
         } else {
-            $instance = $class;
+            $callable = $class . ':' . $action;
         }
 
         $route = $this->createRoute(
-            $annotationRoute['methods'], $annotationRoute['pattern'], [ $instance, $annotationRoute['action'] ]
+            $annotationRoute[ 'methods' ], $annotationRoute[ 'pattern' ], $callable
         );
 
-        if (!empty($annotationRoute['name']) && is_string($annotationRoute['name'])) {
-            $route->setName($annotationRoute['name']);
+        if ( !empty($annotationRoute[ 'name' ]) && is_string( $annotationRoute[ 'name' ] ) ) {
+            $route->setName( $annotationRoute[ 'name' ] );
         }
 
-        if ($annotationRoute['middleware'] !== [] && $this->container instanceof ContainerInterface) {
-            foreach ($annotationRoute['middleware'] as $middlewareName) {
-                $route->addMiddleware($this->container->get($middlewareName));
+        if ( $annotationRoute[ 'middleware' ] !== [] && $this->container instanceof ContainerInterface ) {
+            foreach ( $annotationRoute[ 'middleware' ] as $middlewareName ) {
+                $route->addMiddleware( $this->container->get( $middlewareName ) );
             }
         }
 
-        $this->routes[$route->getIdentifier()] = $route;
+        $this->routes[ $route->getIdentifier() ] = $route;
         $this->routeCounter++;
     }
 
@@ -173,8 +166,8 @@ class AnnotationRouteCollector extends RouteCollector
     {
         $directoryPath = $this->getDefaultControllersPath();
 
-        if ($directoryPath === null || !is_dir($directoryPath)) {
-            throw new \RuntimeException('Directory path for controllers must be defined!', 500);
+        if ( $directoryPath === null || !is_dir( $directoryPath ) ) {
+            throw new \RuntimeException( 'Directory path for controllers must be defined!', 500 );
         }
 
         $docParser = new DocParser();
