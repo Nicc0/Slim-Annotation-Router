@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace Slim\AnnotationRouter;
 
 use Doctrine\Common\Annotations\Annotation\IgnoreAnnotation;
+use Doctrine\Common\Annotations\AnnotationException;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\DocParser;
 use Psr\Container\ContainerInterface;
+use ReflectionException;
+use ReflectionProperty;
+use RuntimeException;
 use Slim\AnnotationRouter\Annotations\Middleware;
 use Slim\AnnotationRouter\Annotations\Route;
 use Slim\AnnotationRouter\Annotations\RoutePrefix;
 use Slim\AnnotationRouter\Loader\AnnotationClassLoader;
 use Slim\AnnotationRouter\Loader\AnnotationDirectoryLoader;
 use Slim\Routing\RouteCollector;
-use SlimAbstractController;
+use Throwable;
 
 use function dirname;
 use function file_exists;
@@ -46,18 +50,18 @@ class AnnotationRouteCollector extends RouteCollector
         'middleware' => Middleware::class,
     ];
 
-    /** @var string|null */
-    protected $defaultControllersPath;
+    /** @var string[] */
+    protected $defaultControllersPath = [];
 
     /** @var string|null */
     protected $defaultRoutesTemporaryFilePath;
 
     /**
-     * @param string $path
+     * @param string[] $path
      *
      * @return self
      */
-    public function setDefaultControllersPath(string $path): AnnotationRouteCollector
+    public function setDefaultControllersPath(string ...$path): AnnotationRouteCollector
     {
         $this->defaultControllersPath = $path;
 
@@ -65,9 +69,9 @@ class AnnotationRouteCollector extends RouteCollector
     }
 
     /**
-     * @return string
+     * @return string[]
      */
-    public function getDefaultControllersPath(): ?string
+    public function getDefaultControllersPath(): array
     {
         return $this->defaultControllersPath;
     }
@@ -84,17 +88,12 @@ class AnnotationRouteCollector extends RouteCollector
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getDefaultTemporaryFilePath(): string
     {
         return $this->defaultRoutesTemporaryFilePath ?? sys_get_temp_dir();
-    }
-
-    /**
-     * @return ContainerInterface|null
-     */
-    public function getContainer(): ?ContainerInterface
-    {
-        return $this->container ?? null;
     }
 
     /**
@@ -113,7 +112,7 @@ class AnnotationRouteCollector extends RouteCollector
         if ( $forceFromAnnotation === true || $routes === [] ) {
             try {
                 $routes = $this->collectRoutesFromAnnotations();
-            } catch ( \Throwable $exception ) {
+            } catch ( Throwable $exception ) {
                 trigger_error( 'cannot collect routes from annotation, ' . $exception->getMessage(), E_USER_WARNING );
             }
         }
@@ -160,20 +159,64 @@ class AnnotationRouteCollector extends RouteCollector
     /**
      * @return array
      *
-     * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \ReflectionException
+     * @throws AnnotationException
+     * @throws ReflectionException
      */
     private function collectRoutesFromAnnotations(): array
     {
-        $directoryPath = $this->getDefaultControllersPath();
+        $directoriesPath = $this->getDefaultControllersPath();
 
-        if ( $directoryPath === null || !is_dir( $directoryPath ) ) {
-            throw new \RuntimeException( 'Directory path for controllers must be defined!', 500 );
+        if ( $directoriesPath === [] ) {
+            throw new RuntimeException( 'Directory path for controllers must be defined!', 500 );
         }
 
+        $annotationDirectoryLoader = new AnnotationDirectoryLoader(
+            new AnnotationClassLoader( $this->getAnnotationReader() )
+        );
+
+        $routes = [];
+
+        foreach ( $directoriesPath as $directoryPath ) {
+            $routes = array_merge( $routes, $annotationDirectoryLoader->load( $directoryPath ) );
+        }
+
+        if ( ! is_dir($dirname = dirname($this->getTemporaryFileName())) && !mkdir( $dirname, 0777, true ) && !is_dir( $dirname ) ) {
+            throw new RuntimeException( sprintf( 'Directory "%s" was not created', $dirname ) );
+        }
+
+        if ( is_writable( dirname( $tempName = $this->getTemporaryFileName() ) ) ) {
+            file_put_contents( $tempName, sprintf( '<?php return %s;', var_export( $routes, true ) ) );
+        }
+
+        return $routes;
+    }
+
+    /**
+     * @return AnnotationReader
+     *
+     * @throws AnnotationException
+     */
+    private function getAnnotationReader(): AnnotationReader
+    {
         $docParser = new DocParser();
         $docParser->setIgnoreNotImportedAnnotations( true );
 
+        $annotationReader = new AnnotationReader($docParser);
+
+        $this->registerAnnotations();
+
+        $reflection = new ReflectionProperty(AnnotationReader::class, 'globalImports');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, $this->annotationImports);
+
+        return $annotationReader;
+    }
+
+    /**
+     * @deprecated
+     */
+    private function registerAnnotations(): void
+    {
         $annotationsPath = __DIR__ . DIRECTORY_SEPARATOR . 'Annotations';
 
         foreach (scandir($annotationsPath) as $annotation) {
@@ -182,26 +225,6 @@ class AnnotationRouteCollector extends RouteCollector
                 AnnotationRegistry::registerFile($annotationPath);
             }
         }
-
-        $annotationReader = new AnnotationReader($docParser);
-
-        $reflection = new \ReflectionProperty(AnnotationReader::class, 'globalImports');
-        $reflection->setAccessible(true);
-        $reflection->setValue(null, $this->annotationImports);
-
-        $annotationDirectoryLoader = new AnnotationDirectoryLoader(new AnnotationClassLoader($annotationReader));
-
-        $routes = $annotationDirectoryLoader->load($directoryPath);
-
-        if (!is_dir($dirname = dirname($this->getTemporaryFileName())) && !mkdir($dirname) && !is_dir($dirname)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $dirname));
-        }
-
-        if (is_writable(dirname($tempName = $this->getTemporaryFileName()))) {
-            file_put_contents($tempName, '<?php return ' . var_export($routes, true) . ';');
-        }
-
-        return $routes;
     }
 
     /**
