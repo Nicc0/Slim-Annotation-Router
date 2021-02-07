@@ -1,4 +1,5 @@
 .idea/
 .git/
 vendor/
+tests/Cache/
 composer.lock
