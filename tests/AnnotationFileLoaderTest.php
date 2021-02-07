@@ -15,7 +15,7 @@ use Slim\AnnotationRouter\Loader\AnnotationFileLoader;
  */
 class AnnotationFileLoaderTest extends TestCase
 {
-    /** @var \Slim\AnnotationRouter\Loader\AnnotationFileLoader */
+    /** @var AnnotationFileLoader */
     protected $fileLoader;
 
     /**

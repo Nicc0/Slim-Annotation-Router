@@ -9,6 +9,7 @@ use Slim\Http\Factory\DecoratedResponseFactory;
 use Slim\Interfaces\RouteInterface;
 use Slim\Psr7\Factory\ResponseFactory;
 use Slim\Psr7\Factory\StreamFactory;
+
 use const DIRECTORY_SEPARATOR;
 
 /**
@@ -47,7 +48,6 @@ class SlimIntegrationTest extends TestCase
         $this->assertArrayHasKey('route1', $routes);
         $this->assertArrayHasKey('route2', $routes);
 
-        /** @var RouteInterface $route */
         $route = $routes['route0'];
 
         $this->assertInstanceOf(RouteInterface::class, $route);

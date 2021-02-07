@@ -5,6 +5,8 @@ namespace Slim\AnnotationRouter\Tests\Controller;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use function sprintf;
+
 /**
  * Class ExampleController
  *
@@ -20,11 +22,11 @@ class ExampleController extends AbstractController
     /**
      * @Route("/test", methods={"GET"}, name="example.test")
      *
-     * @param \Psr\Http\Message\RequestInterface $request
-     * @param \Psr\Http\Message\ResponseInterface $response
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
      *
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      */
     public function testAction(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
@@ -37,15 +39,15 @@ class ExampleController extends AbstractController
      * @Route("/test/{name}", methods={"GET"}, name="example.test")
      * @Route("/test/{name}/hello", methods={"GET"}, name="example.test.hello")
      *
-     * @param \Psr\Http\Message\RequestInterface $request
-     * @param \Psr\Http\Message\ResponseInterface $response
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
      *
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      */
     public function testHelloAction(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $output = \sprintf('Hello %s!', $args['name']);
+        $output = sprintf('Hello %s!', $args['name']);
 
         $response->getBody()->write($output);
 
