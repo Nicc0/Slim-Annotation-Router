@@ -146,6 +146,10 @@ class AnnotationRouteCollector extends RouteCollector
             $route->setName( $annotationRoute[ 'name' ] );
         }
 
+		if ( !empty($annotationRoute[ 'arguments' ])) {
+			$route->setArguments( $annotationRoute[ 'arguments' ] );
+		}
+
         if ( $annotationRoute[ 'middleware' ] !== [] && $this->container instanceof ContainerInterface ) {
             foreach ( $annotationRoute[ 'middleware' ] as $middlewareName ) {
                 $route->addMiddleware( $this->container->get( $middlewareName ) );
