@@ -87,8 +87,8 @@ class AnnotationClassLoader
                 }
 
                 foreach ($middleware as $middlewareName) {
-                    foreach ($routes as $route) {
-                        $route['middleware'][] = $middlewareName;
+                    foreach ($routes as $i => $route) {
+                        $routes[$i]['middleware'][] = $middlewareName;
                     }
                 }
 
@@ -117,6 +117,7 @@ class AnnotationClassLoader
         return [
             'name'       => $annotation->name,
             'methods'    => $annotation->methods,
+            'arguments'  => $annotation->arguments,
             'pattern'    => $routePrefix . $annotation->value,
             'class'      => $class,
             'action'     => $action,
