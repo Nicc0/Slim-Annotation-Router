@@ -25,4 +25,8 @@ class Route
 
     /** @var string */
     public $description = '';
+
+	/** @var string[] */
+	public $arguments = [];
+
 }
